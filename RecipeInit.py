@@ -1,67 +1,131 @@
-# Only needs to be run once.
-get_ipython().system('pip3 install beautifulsoup4')
-get_ipython().system('pip3 install lxml')
-
 import requests
 import time
 from bs4 import BeautifulSoup
 from lxml import html
+import urllib.parse
+import urllib.request
+import re
 
-def generateRecipes_allR():
-    # Retrieves the allrecipes.com website
-    res = requests.get('https://www.allrecipes.com')
+# Obtain Top Loaded Results from Site in Search Page
+def list_allRecipes():
+    
+    url = "https://allrecipes.com/search/results/"
+    req = urllib.request.Request(url)
+    html_content = urllib.request.urlopen(req).read()
+    
+    soup = BeautifulSoup(html_content, 'lxml')
+    search_data = []
+    articles = soup.findAll("article", {"class": "fixed-recipe-card"})
+    
+    iterarticles = iter(articles)
 
-    # Makes the information retrieved readable
-    soup = BeautifulSoup(res.text, 'lxml')
+    for article in iterarticles:
+        data = {}
+        try:
+            data["name"] = article.find("h3", {"class": "fixed-recipe-card__h3"}).get_text().strip(' \t\n\r')
+            data["description"] = article.find("div", {"class": "fixed-recipe-card__description"}).get_text().strip(' \t\n\r')
+            data["url"] = article.find("a", href=re.compile('^https://www.allrecipes.com/recipe/'))['href']
+        except Exception as e2:
+            pass
 
-    # Select only the a tags that contain the hyperlinks and returns the selected list
-    return(soup.select('div[id="insideScroll"] > ul > li > a'))
-
-def generateRecipes_FDNTWK():
-    # Retrieves the foodnetwork.com website
-    res = requests.get('https://www.foodnetwork.com')
-
-    # Makes the information retrieved readable
-    soup = BeautifulSoup(res.text, 'lxml')
-
-    find = soup.select('div[class="o-HeaderFresh__m-PromoList"] >  ul > li > a')[1]
-    return find
+        if data:
+            search_data.append(data)
+        
+    return search_data
 
 
 def listToString(s):
     str1 = " " 
     return (str1.join(s)) 
 
-def recipeInfo(url):
-
-    # Retrive the url and convert to lxml BeautifulSoup
-#     soup = BeautifulSoup(requests.get(url).text, "lxml")
+# Extract Information from all the Recipes
+def allRecipes_Info(url):
+    
     pageContent = requests.get(url)
     tree = html.fromstring(pageContent.content)
-    
-    name = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/div[1]/div/section[2]/h1/text()'))
-    serve = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/section/div[1]/text()'))
-    time = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/span/span/span[1]/text()'))
-
-    ingredients = ''
     soup = BeautifulSoup(requests.get(url).text, 'lxml')
-    items = soup.find_all(attrs={"class": "recipe-ingred_txt added"})
-    # For each element in the list iRaw:
-    for i in items:
-        # Concatenate newline character and string of i to ingredients
-        ingredients += '\n' + i.string
+    
+    # Ratings:
+    try:
+        rating = float(soup.find("div", {"class": "rating-stars"})["data-ratingstars"])
+    except TypeError:
+        ratingT = listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/a[1]/span[1]/text()'))
+        temp = ratingT.split()
+        rating = float(temp[1])
+    except ValueError:
+        rating = None
+    
+    # Recipe Name:
+    name = listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[1]/div[1]/div/h1/text()'))
+    if not name:
+        name = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/div[1]/div/section[2]/h1/text()'))
+    
+    # Serving Size:
+    serve = listToString(tree.xpath('//*[@id="recipe-body"]/section[1]/div/div[2]/text()'))
+    if not serve:
+        serve = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/section/div[1]/text()'))
+    
+    # Total Time:
+    t1 = listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[2]/div[2]/div[1]/div/aside/section/div[1]/div[3]/div[2]/text()'))
+    time = "".join(t1.split())
+    if not time: 
+        time = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/span/span/span[1]/text()'))
 
-#     Concatenate the accumulated information
-    text = 'Recipe Name: ' + name + '\n' +             'Serves: ' + serve + '\n' +             'Time: ' + time + '\n' +             'Ingredients: ' + ingredients + '\n\n';
-    print(text)
-    return
+    # Array of ingredients
+    ingredients = []
+    iList = soup.find_all(attrs={"class": "recipe-ingred_txt added"})
+    for i in iList:
+        element = i.string
+        ingredients.append(element)
+    if not ingredients:
+        base = soup.findAll("li", {"class": "ingredients-item"})
+        iterbase = iter(base)
 
-# Testing:
-# recipeInfo('https://www.allrecipes.com/recipe/162760/fluffy-pancakes/')
-# recipeInfo('https://www.allrecipes.com/recipe/240702/pine-cone-cheese-ball/')
-# recipeInfo('https://www.allrecipes.com/recipe/12682/apple-pie-by-grandma-ople/')
+        for base in iterbase:
+            iList2 = base.find('span', {"class": "ingredients-item-name"}).get_text().strip(' \t\n\r')
+            if iList2:
+                ingredients.append(iList2)
+
+    # Array of directions
+    directions = []
+    dList = soup.find_all(attrs={"class": "recipe-directions__list--item"})
+    for i in dList:
+        direc = i.string
+        if(direc != None):
+            if(direc.index('\n') != -1):
+                directions.append(direc[:direc.index('\n')])
+            else:
+                directions.append(direc)
+    if not directions:
+        bse = soup.select('div[class= "section-body"]>p')
+
+        for s in bse:
+            step = s.get_text()
+            if step:
+                directions.append(step)
+        
+    # Concatenate the accumulated information
+    text = {
+        'Recipe Name':  name,
+        'Rating': rating,
+        'Serves': serve,
+        'Total Time': time,
+        'Ingredients': ingredients,
+        'Directions': directions,
+    } 
+
+    return text
 
 
+# Store will hold all the recipes(array of dictionaries)
+store = list_allRecipes()
 
-
-
+# Obtain url from each recipe in array store(extracting value of key 'url')
+# Then use the url grabbed and fetch Recipe info using allRecipes_Info(url) function
+link = []
+for i in store: 
+    temp = i.get('url')
+    link.append(temp)
+for j in link:
+    output = allRecipes_Info(j)
+    print(output, end='\n\n')
