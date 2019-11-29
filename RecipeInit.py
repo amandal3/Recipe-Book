@@ -1,7 +1,6 @@
 # Only needs to be run once.
 get_ipython().system('pip3 install beautifulsoup4')
 get_ipython().system('pip3 install lxml')
-get_ipython().system('pip3 install python-allrecipes==0.2.1')
 
 import requests
 import time
@@ -41,11 +40,11 @@ def list_allRecipes(queryDetails):
     return search_data
 
 
+# Extract Information from all the Recipes
 def listToString(s):
     str1 = " " 
     return (str1.join(s)) 
 
-# Extract Information from all the Recipes
 def allRecipes_Info(url):
     
     pageContent = requests.get(url)
@@ -58,7 +57,10 @@ def allRecipes_Info(url):
     except TypeError:
         ratingT = listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[1]/div[2]/div[1]/a[1]/span[1]/text()'))
         temp = ratingT.split()
-        rating = float(temp[1])
+        try:
+            rating = float(temp[1])
+        except IndexError:
+            rating = float(temp[0])
     except ValueError:
         rating = None
     
@@ -73,10 +75,13 @@ def allRecipes_Info(url):
         serve = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/section/div[1]/text()'))
     
     #Calories Per Serving Size:
-    calories = listToString(tree.xpath('//*[@id="nutrition-button"]/span[1]/span[1]/text()'))+listToString(tree.xpath('//*[@id="nutrition-button"]/span[1]/span[2]/text()'))
-    if not calories:
-        c=listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[2]/div[2]/section[2]/div/div[2]/text()'))
-        calories = c.split()[0] + ' ' + c.split()[1].split(';',1)[0]
+    try:
+        calories = listToString(tree.xpath('//*[@id="nutrition-button"]/span[1]/span[1]/text()'))+listToString(tree.xpath('//*[@id="nutrition-button"]/span[1]/span[2]/text()'))
+        if not calories:
+            c=listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[2]/div[2]/section[2]/div/div[2]/text()'))
+            calories = c.split()[0] + ' ' + c.split()[1].split(';',1)[0]            
+    except IndexError:
+        pass
     
     # Total Time:
     t1 = listToString(tree.xpath('/html/body/div[1]/div/main/div[1]/div[2]/div[1]/div[2]/div[2]/div[1]/div/aside/section/div[1]/div[3]/div[2]/text()'))
@@ -158,76 +163,113 @@ def allRecipes_Info(url):
   The result will be the complexity of the recipe 
 '''
 
-def complexity(dictionary):
-    for k in dictionary:
-        complexityTot = 0
+class ComplexLevels:
+    def complexity(dictionary):
+        for k in dictionary:
+            complexityTot = 0
 
-        #Complexity Score for Time
-        stringTime = k.get('Total Time')
-        if not stringTime:
-            pass
-        else:
-            timeArr = re.split('[H m hr min hrs mins]',stringTime)
-            while('' in timeArr) : 
-                timeArr.remove('') 
-
-        if len(timeArr) == 2:
-            intTime = int(timeArr[1]) + (int(timeArr[0]) * 60) #convert dem to mins
-        elif len(timeArr) == 1:
-            #only min
-            temp = int(timeArr[0])
-            if temp < 9: # just incase a recipe takes exactly 10 hr
-                intTime = 9 * 60 
+            #Complexity Score for Time
+            stringTime = k.get('Total Time')
+            if not stringTime:
+                pass
             else:
-                intTime = int(timeArr[0])
+                timeArr = re.split('[H m hr min hrs mins]',stringTime)
+                while('' in timeArr) : 
+                    timeArr.remove('') 
 
-        if intTime > 240: # 4 Hours 
-            complexityTot = complexityTot + 5
-        elif intTime > 150: # 2 Hours 30 Mins 
-            complexityTot = complexityTot + 4
-        elif intTime > 90: # 1 Hour 30 Mins 
-            complexityTot = complexityTot + 3
-        elif intTime > 60: # 1 Hour
-            complexityTot = complexityTot + 2
-        else:
-            complexityTot = complexityTot + 1
+            if len(timeArr) == 2:
+                intTime = int(timeArr[1]) + (int(timeArr[0]) * 60) #convert dem to mins
+            elif len(timeArr) == 1:
+                #only min
+                temp = int(timeArr[0])
+                if temp < 9: # just incase a recipe takes exactly 10 hr
+                    intTime = 9 * 60 
+                else:
+                    intTime = int(timeArr[0])
 
-        # Complexity Score for Ingredients
-        ingredientArr = k.get('Ingredients')
-        if len(ingredientArr) > 20:
-            complexityTot = complexityTot + 5
-        elif len(ingredientArr) > 15:
-            complexityTot = complexityTot + 4
-        elif len(ingredientArr) > 10:
-            complexityTot = complexityTot + 3
-        elif len(ingredientArr) > 7:
-            complexityTot = complexityTot + 2
-        else:
-            complexityTot = complexityTot + 1
+            if intTime > 240: # 4 Hours 
+                complexityTot = complexityTot + 5
+            elif intTime > 150: # 2 Hours 30 Mins 
+                complexityTot = complexityTot + 4
+            elif intTime > 90: # 1 Hour 30 Mins 
+                complexityTot = complexityTot + 3
+            elif intTime > 60: # 1 Hour
+                complexityTot = complexityTot + 2
+            else:
+                complexityTot = complexityTot + 1
 
-        # Complexity Score for Steps 
-        stepsArr = k.get('Directions')
-        if len(stepsArr) == 0:
-            url = k.get('URL')
-            urlSearch = allRecipes_Info(url)
-            stepsArr = urlSearch['Directions']
+            # Complexity Score for Ingredients
+            ingredientArr = k.get('Ingredients')
+            if len(ingredientArr) > 20:
+                complexityTot = complexityTot + 5
+            elif len(ingredientArr) > 15:
+                complexityTot = complexityTot + 4
+            elif len(ingredientArr) > 10:
+                complexityTot = complexityTot + 3
+            elif len(ingredientArr) > 7:
+                complexityTot = complexityTot + 2
+            else:
+                complexityTot = complexityTot + 1
 
-        if len(stepsArr) > 7:
-            complexityTot = complexityTot + 5
-        elif len(stepsArr) > 5:
-            complexityTot = complexityTot + 4
-        elif len(stepsArr) > 3:
-            complexityTot = complexityTot + 3
-        elif len(stepsArr) > 2:
-            complexityTot = complexityTot + 2
-        else:
-            complexityTot = complexityTot + 1
+            # Complexity Score for Steps 
+            stepsArr = k.get('Directions')
+            if len(stepsArr) == 0:
+                url = k.get('URL')
+                urlSearch = allRecipes_Info(url)
+                stepsArr = urlSearch['Directions']
 
-        trueComplexity = round(complexityTot/3) #roundsUp
-        k['Complexity'] = trueComplexity
+            if len(stepsArr) > 7:
+                complexityTot = complexityTot + 5
+            elif len(stepsArr) > 5:
+                complexityTot = complexityTot + 4
+            elif len(stepsArr) > 3:
+                complexityTot = complexityTot + 3
+            elif len(stepsArr) > 2:
+                complexityTot = complexityTot + 2
+            else:
+                complexityTot = complexityTot + 1
+
+            trueComplexity = round(complexityTot/3) #roundsUp
+            k['Complexity'] = trueComplexity
+
+        return dictionary
+
+#Uses Class Complex Levels to allow users to search for recipes based on its complexity
+def complexitySearch():
+    x = ComplexLevels
     
-    return dictionary
+    print("What complexity would you like your recipe to be?\nPress [1]Beginner [2]Intermediate [3]Advanced [4]Expert [5]Master")
+    user = input("\nEnter a number from 1-5: ")
+    level = int(user)
+    
+    lib = []
+    if level == 1: 
+        for i in x.complexity(D):
+            a = i.get('Complexity')
+            if a == 1:
+                lib.append(i)
+    elif level == 2:
+        for i in x.complexity(D):
+            a = i.get('Complexity')
+            if a == 2:
+                lib.append(i)
+    elif level == 3:
+        for i in x.complexity(D):
+            a = i.get('Complexity')
+            if a == 3:
+                lib.append(i)
+    elif level == 4:
+        for i in x.complexity(D):
+            a = i.get('Complexity')
+            if a == 4:
+                lib.append(i)
+    elif level == 5:
+        for i in x.complexity(D):
+            a = i.get('Complexity')
+            if a == 5:
+                lib.append(i)  
 
+    return lib
 
 ### TESTING
 ## 1. Search functionality based on ingredients
@@ -255,9 +297,7 @@ potluck = list_allRecipes(ptlck)
 for i in potluck:
     print(i, end='\n\n')
 
-# Now grab all recipe info from potluck list:
-# Done by obtaining url from each recipe in array store(extracting value of key 'url')
-# Then use the url grabbed and fetch Recipe info using allRecipes_Info(url) function
+# Now grab all recipe info from potluck list
 link = []
 for i in potluck: 
     temp = i.get('url')
@@ -267,7 +307,8 @@ for j in link:
     output = allRecipes_Info(j)
     print(output, end='\n\n')
 
-#3. More filtering tests: All recipes that fit query1 or query2
+## 3. More filtering tests: All recipes that fit query1 or query2
+# Will take a while to process bc theres so much information
 qD = {
   "wt": "",  # Query keywords (optional) 
   "ingIncl": "chicken",  # 'Must be included' ingrdients (optional)
@@ -292,5 +333,198 @@ for j in lst:
     Tmp2 = allRecipes_Info(j)
     D.append(Tmp2)
 
-# Testing Complexity: complexity feature added into recipe info
-C1 = complexity(D)
+#Class for functions within the main menu
+class MainMenu:
+    def __init__(self):
+        print("Enter the number of one of the menu choices:")
+        print("  >>> 1: Search for recipes based on ingredients")
+        print("  >>> 2. Search for recipes based on keywords(ie. Christmas, cake, Chinese)")
+        print("  >>> 3. Search for recipes based on keywords and ingredients")
+        print("  >>> 4. Search for recipes based on complexity")
+        print("  >>> 5. Exit program\n")
+        
+        self.choice = input("Your choice: ")
+    
+    #Option One: "Search for a recipes based on ingredients"
+    def optionOne(self):
+        if self.choice != '1':
+            return 0
+        
+        while True:
+            print("Query:\nIf you wish to leave a specific section blank, press enter")
+
+            include = input(" >> Enter your must be included ingredient(s): ")
+            dontInclude = input(" >> Enter ingredient(s) you do not want to be included: ")
+            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
+
+            if not sort:
+                sort = 're'
+
+            specifics = {
+              "wt": '',       # Query keywords
+              "ingIncl": include,  # 'Must be included' ingredient(s) (optional)
+              "ingExcl": dontInclude,  # 'Must not be included' ingredient(s) (optional)
+              "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
+            }
+
+            fridge = list_allRecipes(specifics)
+            for i in fridge:
+                print(i,end='\n\n')
+            
+            print("Do you want to view a specific recipe?")
+            response = int(input(" >> Enter [1] for Yes [2] for No: "))
+            
+            if response == 1:
+                print("Of the list generated previously, copy the url you desire and enter that below")
+                url = input(" >> Paste url please: ")
+                print("\n")
+                hp = allRecipes_Info(url)
+                for j in hp:
+                    hyperlink = print(j, hp[j], '\n')
+            else:
+                hyperlink = print("Goodbye. Happy Cooking.")
+            
+            return hyperlink
+    
+    #Option Two: "Search for a recipes based on keywords"
+    def optionTwo(self):
+        if self.choice != '2':
+            return 0
+        
+        while True:
+            print("Query:\nIf you wish to leave a specific section blank, press enter")
+
+            keywords = input(" >> Enter keywords you want to search by: ")
+            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
+
+            if not sort:
+                sort = 're'
+
+            specs = {
+              "wt": keywords,       # Query keywords
+              "ingIncl": '',  # 'Must be included' ingredient(s) (optional)
+              "ingExcl": '',  # 'Must not be included' ingredient(s) (optional)
+              "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
+            }
+
+            allR = list_allRecipes(specs)
+            for i in allR:
+                print(i,end='\n\n')
+            
+            print("Do you want to view a specific recipe?")
+            response = int(input(" >> Enter [1] for Yes [2] for No: "))
+            
+            if response == 1:
+                print("Of the list generated previously, copy the url you desire and enter that below")
+                url = input(" >> Paste url please: ")
+                print("\n")
+                hp = allRecipes_Info(url)
+                for j in hp:
+                    hyperlink = print(j, hp[j], '\n')
+            else:
+                hyperlink = print("Goodbye. Happy Cooking.")
+            
+            return hyperlink                
+    
+    #Option Three: "Search for a recipes based on keywords and ingredients"
+    def optionThree(self):
+        if self.choice != '3':
+            return 0
+        
+        while True:
+            print("Query:\nIf you wish to leave a specific section blank, press enter")
+            
+            keywords = input(" >> Enter keywords you want to search by:")
+            include = input(" >> Enter your must be included ingredient(s): ")
+            dontInclude = input(" >> Enter ingredient(s) you do not want to be included:")
+            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
+
+            if not sort:
+                sort = 're'
+
+            specD = {
+              "wt": keywords,       # Query keywords
+              "ingIncl": include,  # 'Must be included' ingredient(s) (optional)
+              "ingExcl": dontInclude,  # 'Must not be included' ingredient(s) (optional)
+              "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
+            }
+
+            fridgeR = list_allRecipes(specD)
+            for i in fridgeR:
+                print(i,end='\n\n')
+            
+            print("Do you want to view a specific recipe?")
+            response = int(input(" >> Enter [1] for Yes [2] for No: "))
+            
+            if response == 1:
+                print("Of the list generated previously, copy the url you desire and enter that below")
+                url = input(" >> Paste url please: ")
+                print("\n")
+                hp = allRecipes_Info(url)
+                for j in hp:
+                    hyperlink = print(j, hp[j], '\n')
+            else:
+                hyperlink = print("Goodbye. Happy Cooking.")
+            
+            return hyperlink
+    
+    #Option Four: "Search for a recipes based on complexity level"
+    def optionFour(self):
+        if self.choice != '4':
+            return 0
+ 
+        while True:
+                print("Query:\nIf you wish to leave a specific section blank, press enter")
+
+                keywords = input(" >> Enter keywords you want to search by: ")
+                include = input(" >> Enter your must be included ingredient(s): ")
+                dontInclude = input(" >> Enter ingredient(s) you do not want to be included: ")
+                sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
+
+                if not sort:
+                    sort = 're'
+
+                specDts = {
+                  "wt": keywords,       # Query keywords
+                  "ingIncl": include,  # 'Must be included' ingredient(s) (optional)
+                  "ingExcl": dontInclude,  # 'Must not be included' ingredient(s) (optional)
+                  "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
+                }
+
+                allRs = list_allRecipes(specDts)
+                DoR = []
+                Lt = []
+                for i in allRs:
+                    temp = i.get('url')
+                    Lt.append(temp)
+
+                for j in Lt:
+                    temp2 = allRecipes_Info(j)
+                    DoR.append(temp2)
+
+                cS = complexitySearch()
+                for k in cS:
+                    cmplxS = print(k, '\n')
+                
+                return cmplxS
+
+    #Option Five: "Exit Program"
+    def optionFive(self):
+        if self.choice != '5':
+            return 0
+        else: return 1
+
+## FOR USERS:
+print("Welcome to my recipe book.")
+user = int(input("To begin press 1: "))
+while user == 1:
+    m = MainMenu()
+    m.optionOne()
+    m.optionTwo()
+    m.optionThree()
+    m.optionFour()
+    m.optionFive()
+    
+    user = int(input ("Press 1 to test again. Another number to exit: "))
+
+print("Goodbye")
