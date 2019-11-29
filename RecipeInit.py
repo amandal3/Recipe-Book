@@ -1,7 +1,3 @@
-# Only needs to be run once.
-get_ipython().system('pip3 install beautifulsoup4')
-get_ipython().system('pip3 install lxml')
-
 import requests
 import time
 from bs4 import BeautifulSoup
@@ -235,7 +231,7 @@ class ComplexLevels:
         return dictionary
 
 #Uses Class Complex Levels to allow users to search for recipes based on its complexity
-def complexitySearch():
+def complexitySearch(D):
     x = ComplexLevels
     
     print("What complexity would you like your recipe to be?\nPress [1]Beginner [2]Intermediate [3]Advanced [4]Expert [5]Master")
@@ -270,68 +266,6 @@ def complexitySearch():
                 lib.append(i)  
 
     return lib
-
-### TESTING
-## 1. Search functionality based on ingredients
-specifics = {
-  "wt": "",       # Query keywords
-  "ingIncl": "",  # 'Must be included' ingredient(s) (optional)
-  "ingExcl": "",  # 'Must not be included' ingredient(s) (optional)
-  "sort": "re"    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
-}
-fridge = list_allRecipes(specifics)
-
-for i in fridge:
-    print(i, end='\n\n')
-
-## 2. POTLUCK: Search functionality based on holiday, culture, type of food (holiday, culture, type of food)
-# If no specifications, will return standard search/results page
-ptlck = {
-  "wt": "Christmas",  # Query keywords (optional) 
-  "ingIncl": "chicken",  # 'Must be included' ingrdients (optional)
-  "ingExcl": "",  # 'Must not be included' ingredients (optional)
-  "sort": "re"    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
-}
-
-potluck = list_allRecipes(ptlck)
-for i in potluck:
-    print(i, end='\n\n')
-
-# Now grab all recipe info from potluck list
-link = []
-for i in potluck: 
-    temp = i.get('url')
-    link.append(temp)
-
-for j in link:
-    output = allRecipes_Info(j)
-    print(output, end='\n\n')
-
-## 3. More filtering tests: All recipes that fit query1 or query2
-# Will take a while to process bc theres so much information
-qD = {
-  "wt": "",  # Query keywords (optional) 
-  "ingIncl": "chicken",  # 'Must be included' ingrdients (optional)
-  "ingExcl": "pork, ginger",  # 'Must not be included' ingredients (optional)
-  "sort": "re"    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
-}
-qD2 = {
-  "wt": "cake",  # Query keywords (optional) 
-  "ingIncl": "chocolate",  # 'Must be included' ingrdients (optional)
-  "ingExcl": "nuts",  # 'Must not be included' ingredients (optional)
-  "sort": "re"    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
-}
-
-fullList = list_allRecipes(qD) + list_allRecipes(qD2)
-D = []
-lst = []
-for i in fullList:
-    Tmp = i.get('url')
-    lst.append(Tmp)
-
-for j in lst:
-    Tmp2 = allRecipes_Info(j)
-    D.append(Tmp2)
 
 #Class for functions within the main menu
 class MainMenu:
@@ -502,7 +436,7 @@ class MainMenu:
                     temp2 = allRecipes_Info(j)
                     DoR.append(temp2)
 
-                cS = complexitySearch()
+                cS = complexitySearch(DoR)
                 for k in cS:
                     cmplxS = print(k, '\n')
                 
@@ -513,18 +447,3 @@ class MainMenu:
         if self.choice != '5':
             return 0
         else: return 1
-
-## FOR USERS:
-print("Welcome to my recipe book.")
-user = int(input("To begin press 1: "))
-while user == 1:
-    m = MainMenu()
-    m.optionOne()
-    m.optionTwo()
-    m.optionThree()
-    m.optionFour()
-    m.optionFive()
-    
-    user = int(input ("Press 1 to test again. Another number to exit: "))
-
-print("Goodbye")
