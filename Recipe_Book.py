@@ -1,3 +1,4 @@
+# User Interface
 import RecipeInit
 from RecipeInit import *
 

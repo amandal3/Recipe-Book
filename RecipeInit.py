@@ -86,7 +86,6 @@ def allRecipes_Info(url):
     if not time: 
         time = listToString(tree.xpath('/html/body/div[1]/div[2]/div/div[3]/section/section[1]/span/span/span[1]/text()'))
 
-        
     # Array of ingredients
     ingredients = []
     iList = soup.find_all(attrs={"class": "recipe-ingred_txt added"})
