@@ -5,7 +5,7 @@ from lxml import html
 import urllib.parse
 import urllib.request
 import re
-import time
+#import time
 
 # Obtain Top Loaded Results from Site in Search Page
 def list_allRecipes(queryDetails):
@@ -437,7 +437,7 @@ class MainMenu:
                   "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
                 }
 
-                start_time = time.time()
+#                start_time = time.time()
 
                 allRs = list_allRecipes(specDts)
                 DoR = []
@@ -458,10 +458,8 @@ class MainMenu:
                 except:
                     cmplxS = print("Sorry")
                     
-                print("Program took:", time.time()- start_time, "to run")
+#                print("Program took:", time.time()- start_time, "to run")
                 return cmplxS
-                
-
 
     #Option Five: "Exit Program"
     def optionFive(self):
