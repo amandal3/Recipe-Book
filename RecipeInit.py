@@ -133,7 +133,7 @@ def allRecipes_Info(url):
 
     return text
 
-# Complexity
+
 '''
 * Complexity is on a scale of 5 (type int)
     * Score is pre-determined based off of:
@@ -230,7 +230,7 @@ class ComplexLevels:
 
         return dictionary
 
-#Uses Class 'Complex Levels' to allow users to search for recipes based on its complexity
+#Uses Class Complex Levels to allow users to search for recipes based on its complexity
 def complexitySearch(D):
     x = ComplexLevels
     
