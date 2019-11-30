@@ -4,6 +4,7 @@ from RecipeInit import *
 
 '''
 TESTING
+Queries are already filled in.
 '''
 
 '''1. Search functionality based on ingredients'''
@@ -17,6 +18,7 @@ fridge = list_allRecipes(specifics)
 
 for i in fridge:
     print(i, end='\n\n')
+
 
 '''
 2. Search functionality based on holiday, culture, type of food (holiday, culture, type of food).
@@ -104,5 +106,8 @@ for j in Lt:
     DoR.append(temp2)
     
  cS = complexitySearch(DoR)
- for k in cS:
-     cmplxS = print(k, '\n')
+ try:
+     for k in cS:
+         cmplxS = print(k, '\n')
+ except:
+     pass

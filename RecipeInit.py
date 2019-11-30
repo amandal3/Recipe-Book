@@ -173,26 +173,26 @@ class ComplexLevels:
                 while('' in timeArr) : 
                     timeArr.remove('') 
 
-            if len(timeArr) == 2:
-                intTime = int(timeArr[1]) + (int(timeArr[0]) * 60) #convert dem to mins
-            elif len(timeArr) == 1:
-                #only min
-                temp = int(timeArr[0])
-                if temp < 9: # just incase a recipe takes exactly 10 hr
-                    intTime = 9 * 60 
-                else:
-                    intTime = int(timeArr[0])
+                if len(timeArr) == 2:
+                    intTime = int(timeArr[1]) + (int(timeArr[0]) * 60) #convert dem to mins
+                elif len(timeArr) == 1:
+                    #only min
+                    temp = int(timeArr[0])
+                    if temp < 9: # just incase a recipe takes exactly 10 hr
+                        intTime = 9 * 60
+                    else:
+                        intTime = int(timeArr[0])
 
-            if intTime > 240: # 4 Hours 
-                complexityTot = complexityTot + 5
-            elif intTime > 150: # 2 Hours 30 Mins 
-                complexityTot = complexityTot + 4
-            elif intTime > 90: # 1 Hour 30 Mins 
-                complexityTot = complexityTot + 3
-            elif intTime > 60: # 1 Hour
-                complexityTot = complexityTot + 2
-            else:
-                complexityTot = complexityTot + 1
+                if intTime > 240: # 4 Hours 
+                    complexityTot = complexityTot + 5
+                elif intTime > 150: # 2 Hours 30 Mins
+                    complexityTot = complexityTot + 4
+                elif intTime > 90: # 1 Hour 30 Mins
+                    complexityTot = complexityTot + 3
+                elif intTime > 60: # 1 Hour
+                    complexityTot = complexityTot + 2
+                else:
+                    complexityTot = complexityTot + 1
 
             # Complexity Score for Ingredients
             ingredientArr = k.get('Ingredients')
@@ -263,7 +263,10 @@ def complexitySearch(D):
         for i in x.complexity(D):
             a = i.get('Complexity')
             if a == 5:
-                lib.append(i)  
+                lib.append(i)
+    
+    if len(lib) == 0:
+        lib = print("No recipes of that level")
 
     return lib
 
@@ -437,10 +440,15 @@ class MainMenu:
                     DoR.append(temp2)
 
                 cS = complexitySearch(DoR)
-                for k in cS:
-                    cmplxS = print(k, '\n')
                 
+                try:
+                    for k in cS:
+                        cmplxS = print(k, '\n')
+                except:
+                    cmplxS = print("Sorry")
                 return cmplxS
+                
+
 
     #Option Five: "Exit Program"
     def optionFive(self):
