@@ -5,6 +5,7 @@ from lxml import html
 import urllib.parse
 import urllib.request
 import re
+import time
 
 # Obtain Top Loaded Results from Site in Search Page
 def list_allRecipes(queryDetails):
@@ -292,8 +293,10 @@ class MainMenu:
 
             include = input(" >> Enter your must be included ingredient(s): ")
             dontInclude = input(" >> Enter ingredient(s) you do not want to be included: ")
-            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
-
+            sort = input(" >> Enter Sorting option: 're' for relevance, 'ra' for rating, 'p' for popular: ")
+            
+            print("\n\nPlease wait... processing...\n")
+            
             if not sort:
                 sort = 're'
 
@@ -314,7 +317,7 @@ class MainMenu:
             if response == 1:
                 print("Of the list generated previously, copy the url you desire and enter that below")
                 url = input(" >> Paste url please: ")
-                print("\n")
+                print("\n\nPlease wait... processing...\n")
                 hp = allRecipes_Info(url)
                 for j in hp:
                     hyperlink = print(j, hp[j], '\n')
@@ -332,8 +335,10 @@ class MainMenu:
             print("Query:\nIf you wish to leave a specific section blank, press enter")
 
             keywords = input(" >> Enter keywords you want to search by: ")
-            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
-
+            sort = input(" >> Enter Sorting option: 're' for relevance, 'ra' for rating, 'p' for popular: ")
+            
+            print("\n\nPlease wait... processing...\n")
+            
             if not sort:
                 sort = 're'
 
@@ -374,8 +379,10 @@ class MainMenu:
             keywords = input(" >> Enter keywords you want to search by:")
             include = input(" >> Enter your must be included ingredient(s): ")
             dontInclude = input(" >> Enter ingredient(s) you do not want to be included:")
-            sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
-
+            sort = input(" >> Enter Sorting option: 're' for relevance, 'ra' for rating, 'p' for popular: ")
+            
+            print("\n\nPlease wait... processing...\n")
+            
             if not sort:
                 sort = 're'
 
@@ -416,8 +423,10 @@ class MainMenu:
                 keywords = input(" >> Enter keywords you want to search by: ")
                 include = input(" >> Enter your must be included ingredient(s): ")
                 dontInclude = input(" >> Enter ingredient(s) you do not want to be included: ")
-                sort = input(" >> Sorting options: 're' for relevance, 'ra' for rating, 'p' for popular\n\n")
-
+                sort = input(" >> Enter Sorting option: 're' for relevance, 'ra' for rating, 'p' for popular: ")
+                
+                print("\n\nPlease wait... processing...\n")
+                
                 if not sort:
                     sort = 're'
 
@@ -427,6 +436,8 @@ class MainMenu:
                   "ingExcl": dontInclude,  # 'Must not be included' ingredient(s) (optional)
                   "sort": sort    # Sorting options : 're' for relevance, 'ra' for rating, 'p' for popular (optional)
                 }
+
+                start_time = time.time()
 
                 allRs = list_allRecipes(specDts)
                 DoR = []
@@ -446,6 +457,8 @@ class MainMenu:
                         cmplxS = print(k, '\n')
                 except:
                     cmplxS = print("Sorry")
+                    
+                print("Program took:", time.time()- start_time, "to run")
                 return cmplxS
                 
 
